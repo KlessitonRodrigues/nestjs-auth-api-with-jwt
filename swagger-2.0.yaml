@@ -4,7 +4,7 @@ info:
   description: |
     Swagger 2.0 specification for the authentication-api service
   version: '1.0.0'
-host: localhost:3000
+host: localhost:3005
 basePath: /
 schemes:
   - http
@@ -44,7 +44,28 @@ paths:
         '200':
           description: Successful sign-in response.
           schema:
-            type: object
+            $ref: '#/definitions/SignInResponse'
+          examples:
+            application/json:
+              accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+              email: jane@example.com
+              name: Jane Doe
+        '400':
+          description: Invalid request body.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '401':
+          description: Invalid email or password.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+              message: Invalid credentials
+              code: invalid_credentials
+        '500':
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
 
   /auth/signup:
     post:
@@ -62,7 +83,23 @@ paths:
         '201':
           description: User created successfully.
           schema:
-            type: object
+            $ref: '#/definitions/SuccessResponse'
+          examples:
+            application/json:
+              message: Created successfully
+              code: created_successfully
+        '400':
+          description: Invalid request body or the email is already registered.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+              message: User already exists
+              code: user_already_exists
+        '500':
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
 
   /auth/signout:
     post:
@@ -72,9 +109,21 @@ paths:
       operationId: signOut
       responses:
         '200':
-          description: Successful sign-out response.
+          description: Successful sign-out response. The auth cookie is cleared.
           schema:
-            type: object
+            $ref: '#/definitions/SuccessResponse'
+          headers:
+            Set-Cookie:
+              type: string
+              description: Expired token cookie.
+          examples:
+            application/json:
+              message: Signed out successfully
+              code: signed_out_successfully
+        '500':
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
 
   /auth/refresh-token:
     post:
@@ -82,19 +131,53 @@ paths:
         - Auth
       summary: Refresh access token
       operationId: refreshToken
+      description: |
+        Accepts the token in the request body or in the auth token cookie.
+        Returns a new access token and sets it as a cookie.
       parameters:
         - in: body
           name: body
-          required: true
+          required: false
           schema:
             $ref: '#/definitions/TokenRequest'
       responses:
         '200':
           description: Token refreshed successfully.
           schema:
-            type: object
+            $ref: '#/definitions/RefreshTokenResponse'
+          headers:
+            Set-Cookie:
+              type: string
+              description: Newly issued token cookie.
+          examples:
+            application/json:
+              accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+              user:
+                userId: 8f8a0f0e-5a2b-4f63-9f12-2f4d5c6e7a8b
+                email: jane@example.com
+                name: Jane Doe
+        '400':
+          description: Missing token.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+              message: Invalid token
+              code: invalid_token
+        '401':
+          description: Invalid or expired token.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+              message: Expired token
+              code: expired_token
+        '500':
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
 
-  /auth/send-recovery-code:
+  /auth/send-code:
     post:
       tags:
         - Auth
@@ -108,11 +191,30 @@ paths:
             $ref: '#/definitions/EmailRequest'
       responses:
         '200':
-          description: Recovery code sent successfully.
+          description: Recovery code generated successfully.
           schema:
-            type: object
+            $ref: '#/definitions/RecoveryCodeResponse'
+          examples:
+            application/json:
+              recoveryCode: '123456'
+        '400':
+          description: Invalid request body.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '404':
+          description: User not found.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+              message: User not found
+              code: user_not_found
+        '500':
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
 
-  /auth/verify-recovery-code:
+  /auth/verify-code:
     post:
       tags:
         - Auth
@@ -126,9 +228,32 @@ paths:
             $ref: '#/definitions/VerifyRecoveryCodeRequest'
       responses:
         '200':
-          description: Recovery code verified successfully.
+          description: Recovery code verified successfully. Returns a short-lived reset token.
           schema:
-            type: object
+            $ref: '#/definitions/VerifyRecoveryCodeResponse'
+          examples:
+            application/json:
+              token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        '400':
+          description: Invalid request body.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '401':
+          description: Invalid or expired recovery code.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+              message: Invalid token
+              code: invalid_token
+        '404':
+          description: User not found.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '500':
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
 
   /auth/reset-password:
     post:
@@ -146,7 +271,27 @@ paths:
         '200':
           description: Password reset successfully.
           schema:
-            type: object
+            $ref: '#/definitions/SuccessResponse'
+          examples:
+            application/json:
+              message: Password reset successfully
+              code: password_reset_successfully
+        '400':
+          description: Invalid request body.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '401':
+          description: Invalid or expired reset token.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+              message: Expired token
+              code: expired_token
+        '500':
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
 
   /auth/google:
     post:
@@ -164,7 +309,33 @@ paths:
         '200':
           description: Successful Google sign-in response.
           schema:
-            type: object
+            $ref: '#/definitions/GoogleSignInResponse'
+          examples:
+            application/json:
+              accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+              userId: 8f8a0f0e-5a2b-4f63-9f12-2f4d5c6e7a8b
+              email: jane@example.com
+              name: Jane Doe
+        '400':
+          description: Invalid request body.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '401':
+          description: Google account has no verified email.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+              message: No verified email found
+              code: no_verified_email
+        '500':
+          description: Failed to fetch Google user information or internal server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+              message: Failed to fetch user info
+              code: failed_to_fetch_user_info
 
   /users:
     get:
@@ -179,6 +350,16 @@ paths:
             type: array
             items:
               $ref: '#/definitions/User'
+          examples:
+            application/json:
+              - id: 8f8a0f0e-5a2b-4f63-9f12-2f4d5c6e7a8b
+                name: Jane Doe
+                email: jane@example.com
+                createdAt: '2026-10-21T10:00:00.000Z'
+        '500':
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
     post:
       tags:
         - Users
@@ -195,6 +376,20 @@ paths:
           description: User created successfully.
           schema:
             $ref: '#/definitions/User'
+          examples:
+            application/json:
+              id: 8f8a0f0e-5a2b-4f63-9f12-2f4d5c6e7a8b
+              name: Jane Doe
+              email: jane@example.com
+              createdAt: '2026-10-21T10:00:00.000Z'
+        '400':
+          description: Invalid request body or the email is already registered.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '500':
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
 
   /users/{id}:
     get:
@@ -206,12 +401,27 @@ paths:
         - in: path
           name: id
           required: true
-          type: integer
+          type: string
+          format: uuid
       responses:
         '200':
           description: User found.
           schema:
             $ref: '#/definitions/User'
+          examples:
+            application/json:
+              id: 8f8a0f0e-5a2b-4f63-9f12-2f4d5c6e7a8b
+              name: Jane Doe
+              email: jane@example.com
+              createdAt: '2026-10-21T10:00:00.000Z'
+        '404':
+          description: User not found.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '500':
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
     put:
       tags:
         - Users
@@ -221,7 +431,8 @@ paths:
         - in: path
           name: id
           required: true
-          type: integer
+          type: string
+          format: uuid
         - in: body
           name: body
           required: true
@@ -232,6 +443,24 @@ paths:
           description: User updated successfully.
           schema:
             $ref: '#/definitions/User'
+          examples:
+            application/json:
+              id: 8f8a0f0e-5a2b-4f63-9f12-2f4d5c6e7a8b
+              name: Jane Doe
+              email: jane@example.com
+              createdAt: '2026-10-21T10:00:00.000Z'
+        '400':
+          description: Invalid request body.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '404':
+          description: User not found.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '500':
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
     patch:
       tags:
         - Users
@@ -241,7 +470,8 @@ paths:
         - in: path
           name: id
           required: true
-          type: integer
+          type: string
+          format: uuid
         - in: body
           name: body
           required: true
@@ -252,6 +482,24 @@ paths:
           description: User patched successfully.
           schema:
             $ref: '#/definitions/User'
+          examples:
+            application/json:
+              id: 8f8a0f0e-5a2b-4f63-9f12-2f4d5c6e7a8b
+              name: Jane Doe
+              email: jane@example.com
+              createdAt: '2026-10-21T10:00:00.000Z'
+        '400':
+          description: Invalid request body.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '404':
+          description: User not found.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '500':
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
     delete:
       tags:
         - Users
@@ -261,9 +509,268 @@ paths:
         - in: path
           name: id
           required: true
-          type: integer
+          type: string
+          format: uuid
       responses:
         '200':
           description: User deleted successfully.
           schema:
             $ref: '#/definitions/DeleteResponse'
+          examples:
+            application/json:
+              message: Deleted successfully
+              code: deleted_successfully
+        '404':
+          description: User not found.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '500':
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+definitions:
+  SignInRequest:
+    type: object
+    required:
+      - email
+      - password
+    properties:
+      email:
+        type: string
+        format: email
+        example: jane@example.com
+      password:
+        type: string
+        minLength: 8
+        example: Password123!
+
+  SignInResponse:
+    type: object
+    required:
+      - accessToken
+      - email
+      - name
+    properties:
+      accessToken:
+        type: string
+        description: Signed JWT access token, valid for 1 hour.
+      email:
+        type: string
+        format: email
+      name:
+        type: string
+
+  SignUpRequest:
+    type: object
+    required:
+      - name
+      - email
+      - password
+    properties:
+      name:
+        type: string
+        minLength: 1
+        maxLength: 200
+        example: Jane Doe
+      email:
+        type: string
+        format: email
+        example: jane@example.com
+      password:
+        type: string
+        minLength: 8
+        example: Password123!
+
+  TokenRequest:
+    type: object
+    required:
+      - token
+    properties:
+      token:
+        type: string
+        minLength: 1
+        description: |
+          JWT access token for /auth/refresh-token, or Google OAuth access token
+          for /auth/google. On /auth/refresh-token the token may also be supplied
+          through the auth token cookie instead of the body.
+
+  RefreshTokenResponse:
+    type: object
+    required:
+      - accessToken
+      - user
+    properties:
+      accessToken:
+        type: string
+        description: Newly signed JWT access token, valid for 1 hour.
+      user:
+        $ref: '#/definitions/UserClaims'
+
+  UserClaims:
+    type: object
+    required:
+      - userId
+      - email
+      - name
+    properties:
+      userId:
+        type: string
+        format: uuid
+      email:
+        type: string
+        format: email
+      name:
+        type: string
+
+  GoogleSignInResponse:
+    type: object
+    required:
+      - accessToken
+      - userId
+      - email
+      - name
+    properties:
+      accessToken:
+        type: string
+        description: Signed JWT access token, valid for 1 hour.
+      userId:
+        type: string
+        format: uuid
+      email:
+        type: string
+        format: email
+      name:
+        type: string
+
+  EmailRequest:
+    type: object
+    required:
+      - email
+    properties:
+      email:
+        type: string
+        format: email
+        example: jane@example.com
+
+  VerifyRecoveryCodeRequest:
+    type: object
+    required:
+      - email
+      - code
+    properties:
+      email:
+        type: string
+        format: email
+        example: jane@example.com
+      code:
+        type: string
+        minLength: 6
+        maxLength: 6
+        example: '123456'
+
+  RecoveryCodeResponse:
+    type: object
+    required:
+      - recoveryCode
+    properties:
+      recoveryCode:
+        type: string
+        description: Six digit password recovery code, valid for 15 minutes.
+        example: '123456'
+
+  VerifyRecoveryCodeResponse:
+    type: object
+    required:
+      - token
+    properties:
+      token:
+        type: string
+        description: Short-lived JWT reset token, valid for 15 minutes.
+
+  ResetPasswordRequest:
+    type: object
+    required:
+      - token
+      - newPassword
+    properties:
+      token:
+        type: string
+        description: Reset token returned by /auth/verify-code.
+      newPassword:
+        type: string
+        minLength: 8
+        example: NewPassword456!
+
+  CreateUserRequest:
+    type: object
+    required:
+      - name
+      - email
+      - password
+    properties:
+      name:
+        type: string
+        minLength: 1
+        maxLength: 200
+        example: Jane Doe
+      email:
+        type: string
+        format: email
+        example: jane@example.com
+      password:
+        type: string
+        minLength: 8
+        example: Password123!
+
+  User:
+    type: object
+    required:
+      - id
+      - name
+      - email
+      - createdAt
+    properties:
+      id:
+        type: string
+        format: uuid
+      name:
+        type: string
+      email:
+        type: string
+        format: email
+      createdAt:
+        type: string
+        format: date-time
+
+  SuccessResponse:
+    type: object
+    required:
+      - message
+    properties:
+      message:
+        type: string
+      code:
+        type: string
+      data: {}
+
+  ErrorResponse:
+    type: object
+    required:
+      - message
+    properties:
+      message:
+        type: string
+      code:
+        type: string
+      details: {}
+
+  DeleteResponse:
+    type: object
+    required:
+      - message
+    properties:
+      message:
+        type: string
+      code:
+        type: string
