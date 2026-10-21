@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - ./swagger-2.0.yaml
+      - swagger-2.0.yaml
       - .github/workflows/swagger-pages.yml
   workflow_dispatch:
 
