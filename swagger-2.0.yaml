@@ -3,29 +3,6 @@ info:
   title: Authentication API
   description: |
     Swagger 2.0 specification for the authentication-api service
-
-    ## API Response Codes
-
-    ### Success Codes
-    | Code  | Message |
-    |-------|---------|
-    | SUC000 | Success |
-    | SUC001 | Created successfully |
-    | SUC002 | Updated successfully |
-    | SUC003 | Deleted successfully |
-    | SUC004 | Fetched successfully |
-
-    ### Error Codes
-    | Code  | Message |
-    |-------|---------|
-    | ERR000 | Invalid request |
-    | ERR001 | Internal server error |
-    | ERR002 | User not found |
-    | ERR003 | User already exists |
-    | ERR004 | Invalid credentials |
-    | ERR005 | Invalid token |
-    | ERR006 | Expired token |
-    | ERR007 | Unauthorized |
   version: '1.0.0'
 host: localhost:3000
 basePath: /
