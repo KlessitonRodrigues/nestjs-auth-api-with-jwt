@@ -13,23 +13,6 @@ consumes:
 produces:
   - application/json
 
-x-api-response-codes:
-  # Success Codes
-  SUC000: Success
-  SUC001: Created successfully
-  SUC002: Updated successfully
-  SUC003: Deleted successfully
-  SUC004: Fetched successfully
-  # Error Codes
-  ERR000: Invalid request
-  ERR001: Internal server error
-  ERR002: User not found
-  ERR003: User already exists
-  ERR004: Invalid credentials
-  ERR005: Invalid token
-  ERR006: Expired token
-  ERR007: Unauthorized
-
 paths:
   /:
     get:
